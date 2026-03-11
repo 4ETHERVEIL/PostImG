@@ -108,7 +108,7 @@
                     </div>
                     <div style="text-align: right;">
                         <span class="label" style="color: var(--accent-tertiary);">VERIFIED ID</span>
-                        <div class="id-badge" id="userIdBox">SYS-0000</div>
+                        <div class="id-badge" id="userIdBox">ONION-0000</div>
                     </div>
                 </div>
                 <div class="coin-box">
@@ -186,8 +186,16 @@
         
         // --- 2. SISTEM ID (KTP PENGGUNA) ---
         let clientId = localStorage.getItem('tele_client_id');
+        
+        // Auto-Update: Jika user lama masih pakai awalan SYS-, ganti jadi ONION-
+        if (clientId && clientId.startsWith('SYS-')) {
+            clientId = clientId.replace('SYS-', 'ONION-');
+            localStorage.setItem('tele_client_id', clientId);
+        }
+
+        // Jika user benar-benar baru, buatkan ID ONION- baru
         if (!clientId) {
-            clientId = 'SYS-' + Math.floor(10000 + Math.random() * 90000);
+            clientId = 'ONION-' + Math.floor(10000 + Math.random() * 90000);
             localStorage.setItem('tele_client_id', clientId);
         }
         userIdBox.innerText = clientId;

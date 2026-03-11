@@ -38,6 +38,7 @@
         @keyframes scrollLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
         .container { width: 100%; max-width: 500px; padding: 15px; margin-top: 40px; }
+
         .cyber-card { background: var(--card-bg); border: var(--border-width) solid var(--main-black); box-shadow: 8px 8px 0 var(--main-black); position: relative; overflow: hidden; }
         .cyber-card::before { content: '⬤'; position: absolute; top: 5px; left: 10px; font-size: 10px; color: rgba(0,0,0,0.3); pointer-events: none; }
         .cyber-card::after { content: '⬤'; position: absolute; bottom: 5px; right: 10px; font-size: 10px; color: rgba(0,0,0,0.3); pointer-events: none; }
@@ -145,17 +146,17 @@
                         <label class="input-label" style="color: var(--accent-primary);">✅ SUCCESS. LINK GENERATED:</label>
                         <div style="display: flex; gap: 8px;">
                             <input type="text" id="urlInput" class="cyber-input" readonly>
-                            <button onclick="copyText()" class="cyber-button secondary" style="width: 50px; margin: 0; padding: 0;">
+                            <button type="button" onclick="copyText()" class="cyber-button secondary" style="width: 50px; margin: 0; padding: 0;">
                                 <i class="far fa-copy"></i>
                             </button>
                         </div>
                     </div>
                     <a id="previewLink" href="#" target="_blank" style="text-decoration: none;">
-                        <button class="cyber-button secondary" style="font-size: 0.9rem; padding: 10px;">
+                        <button type="button" class="cyber-button secondary" style="font-size: 0.9rem; padding: 10px;">
                             OPEN NEW TAB <i class="fas fa-external-link-alt" style="margin-left: 5px;"></i>
                         </button>
                     </a>
-                    <button onclick="resetForm()" class="cyber-button" style="background: var(--main-black); color: white; font-size: 0.9rem; padding: 10px;">
+                    <button type="button" onclick="resetForm()" class="cyber-button" style="background: var(--main-black); color: white; font-size: 0.9rem; padding: 10px; margin-top: 8px;">
                         UPLOAD NEW FILE
                     </button>
                 </div>
@@ -166,6 +167,7 @@
     <div id="notification"></div>
 
     <script>
+        // --- 1. VARIABEL DOM ---
         const input = document.getElementById('fileInput');
         const fileLabel = document.getElementById('fileLabel');
         const form = document.getElementById('uploadForm');
@@ -182,15 +184,53 @@
         const MAX_SIZE_MB = 4.5;
         const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
         
+        // --- 2. SISTEM ID (KTP PENGGUNA) ---
         let clientId = localStorage.getItem('tele_client_id');
         if (!clientId) {
-            clientId = 'ONION-' + Math.floor(10000 + Math.random() * 90000);
+            clientId = 'SYS-' + Math.floor(10000 + Math.random() * 90000);
             localStorage.setItem('tele_client_id', clientId);
         }
         userIdBox.innerText = clientId;
 
         let myCoins = 0;
+        let countdownInterval;
 
+        // --- 3. TIMER HITUNG MUNDUR AKURAT (00:00 WIB) ---
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                const now = new Date();
+                
+                // Ambil waktu saat ini persis di zona waktu Jakarta (WIB)
+                const nowWIB = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+                
+                // Set target ke Jam 00:00:00 hari berikutnya (besok) di waktu WIB
+                const tomorrowWIB = new Date(nowWIB);
+                tomorrowWIB.setHours(24, 0, 0, 0); 
+                
+                // Hitung selisih waktu
+                const diff = tomorrowWIB - nowWIB;
+
+                // Jika waktu habis, hentikan timer dan minta koin baru ke server
+                if (diff <= 0) {
+                    clearInterval(countdownInterval);
+                    fetchCoinsFromServer(); 
+                    return;
+                }
+
+                // Ubah milidetik menjadi Jam, Menit, Detik
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+                const s = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+
+                // Tampilkan ke layar
+                btn.innerHTML = `<i class="fas fa-hourglass-half fa-spin"></i> RECHARGE IN ${h}:${m}:${s}`;
+                warningText.innerHTML = `ACCESS DENIED: Insufficient Credits. Server reset in <b>${h}:${m}:${s}</b>`;
+            }, 1000);
+        }
+
+        // --- 4. AMBIL KOIN DARI SERVER ---
         async function fetchCoinsFromServer() {
             try {
                 btn.disabled = true;
@@ -198,6 +238,8 @@
 
                 const res = await fetch(`/api/user/${clientId}`);
                 const data = await res.json();
+                
+                if (!res.ok) throw new Error(data.error || 'Server error');
                 
                 myCoins = data.coins;
                 coinAmountText.innerText = myCoins;
@@ -208,25 +250,29 @@
                 checkCoinStatus();
 
             } catch (error) {
-                console.error("Gagal terhubung ke server");
-                showNotification('ERROR: SERVER CONNECTION LOST', 'error');
+                console.error("Error Koneksi:", error);
+                showNotification(`ERROR: ${error.message}`, 'error');
+                btn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> CONNECTION FAILED`;
             }
         }
+        
+        // Panggil saat web pertama kali dibuka
         fetchCoinsFromServer(); 
 
         function checkCoinStatus() {
             if (myCoins <= 0) {
                 btn.disabled = true; 
-                btn.innerHTML = `<i class="fas fa-ban"></i> OUT OF COINS (RESETS TOMORROW)`;
                 sysWarning.style.borderColor = "var(--accent-tertiary)"; 
                 sysWarning.style.color = "var(--accent-tertiary)";
-                warningText.innerText = "ACCESS DENIED: Insufficient Network Credits. Come back tomorrow!";
+                startCountdown(); // Jalankan timer otomatis saat koin 0
             } else {
+                if (countdownInterval) clearInterval(countdownInterval);
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fas fa-satellite-dish"></i> EXECUTE UPLOAD (-1 COIN)`;
             }
         }
 
+        // --- 5. FUNGSI UPLOAD ---
         function showNotification(text, type = 'success') {
             const n = document.getElementById('notification');
             n.innerHTML = type === 'success' ? `<i class="fas fa-check-circle"></i> ${text}` : `<i class="fas fa-exclamation-triangle"></i> ${text}`;
@@ -248,11 +294,14 @@
                     sizeInfo.classList.add('file-error');
                     warningText.innerText = `ERROR: FILE EXCEEDS ${MAX_SIZE_MB}MB. DEPLOYMENT ABORTED.`;
                     btn.disabled = true; btn.innerHTML = `<i class="fas fa-lock"></i> SYSTEM LOCKED`;
+                    if (countdownInterval) clearInterval(countdownInterval); 
                 } else if (myCoins > 0) {
                     sizeInfo.classList.remove('file-error');
                     sysWarning.style.borderColor = "var(--accent-secondary)"; sysWarning.style.color = "var(--accent-secondary)";
                     warningText.innerText = "READY: FILE SIZE IS OPTIMAL. SAFE TO PROCEED.";
                     btn.disabled = false; btn.innerHTML = `<i class="fas fa-satellite-dish"></i> EXECUTE UPLOAD (-1 COIN)`;
+                } else {
+                    checkCoinStatus();
                 }
             } 
         };
@@ -273,8 +322,8 @@
                 const res = await fetch('/api/upload', { method: 'POST', body: fd });
                 const data = await res.json();
                 
-                if(res.status === 403 && data.error === 'OUT_OF_COINS') {
-                    showNotification('ERROR: SERVER REJECTED - OUT OF COINS', 'error');
+                if (!res.ok) {
+                    showNotification(`ERROR: ${data.error || 'UPLOAD FAILED'}`, 'error');
                     return;
                 }
 
@@ -288,11 +337,9 @@
                     }
 
                     showNotification('UPLOAD COMPLETE!', 'success');
-                } else {
-                    showNotification('ERROR: FAILED TO GET LINK', 'error');
                 }
             } catch (err) { 
-                showNotification('ERROR: CONNECTION LOST OR PAYLOAD REJECTED', 'error');
+                showNotification('ERROR: CONNECTION LOST', 'error');
             } finally {
                 if(resultBox.style.display !== 'block') {
                     checkCoinStatus();
@@ -313,7 +360,7 @@
             warningText.innerText = "WARNING: SYSTEM RESTRICTS FILE SIZES ABOVE 4.5MB.";
             sizeInfo.innerHTML = `Selected Size: 0 MB / Max: 4.5 MB`; sizeInfo.classList.remove('file-error');
             resultBox.style.display = 'none';
-            checkCoinStatus();
+            checkCoinStatus(); 
         }
     </script>
 </body>

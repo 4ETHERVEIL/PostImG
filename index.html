@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDIA DOWNLOADER ULTRA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&family=Space+Grotesk:wght@300;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="bg-noise"></div>
+    <div class="floating-shape shape-1"></div>
+    <div class="floating-shape shape-2"></div>
+
+    <div class="marquee-top">
+        <div class="marquee-content">
+            SYSTEM READY • V.3.0 ULTRA • NO WATERMARK • FAST SPEED • SECURE • SANN404 • SYSTEM READY • V.3.0 ULTRA • NO WATERMARK •
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="brand-container">
+            <div class="brand-glitch" data-text="MD-ULTRA">MediaDownloader</div>
+        </div>
+       
+        <a href="docs.html" class="nav-btn">BACA YA INI</a>
+    </nav>
+
+    <div class="container">
+        
+        <div class="cyber-card main-card">
+            <div class="screw top-left">+</div>
+            <div class="screw top-right">+</div>
+            <div class="screw bottom-left">+</div>
+            <div class="screw bottom-right">+</div>
+
+            <div class="card-header-visual">
+                <div class="profile-section">
+                    <img src="63985eb0b043dbf2bcdc175f50acb386.jpg" alt="User Profile" class="avatar-img" id="userAvatar">
+                    <div class="profile-info">
+                        <span class="user-role">ADMINISTRATOR</span>
+                        <span class="user-action">PASTE YOUR LINK BELOW</span>
+                    </div>
+                </div>
+                <div class="decor-lines">///</div>
+            </div>
+            
+            <div class="card-body">
+                <div class="input-wrapper">
+                    <div class="input-label">TARGET URL:</div>
+                    <input type="text" id="urlInput" class="cyber-input" placeholder="https://tiktok.com/..." autocomplete="off">
+                    <div class="input-focus-border"></div>
+                </div>
+
+                <div class="platform-tags">
+                    <span>#TIKTOK</span> <span>#IG</span> <span>#YT</span> <span>#FB</span> <span>#X</span>
+                </div>
+                
+                <button id="downloadBtn" onclick="fetchMedia()" class="cyber-button">
+                    <span class="btn-text">INITIATE DOWNLOAD</span>
+                    <span class="btn-glare"></span>
+                </button>
+            </div>
+        </div>
+
+        <div id="loading" class="cyber-card hidden" style="text-align: center; padding: 40px;">
+            <div class="scanner"></div>
+            <p class="blink-text">PROCESSING DATA STREAM...</p>
+        </div>
+
+        <div id="error-msg" class="cyber-card error-state hidden">
+            <div class="error-header">SYSTEM ERROR</div>
+            <div class="error-body" id="error-text"></div>
+        </div>
+
+        <div id="result" class="result-stack"></div>
+
+        <footer class="sann-footer">
+            <div class="footer-line"></div>
+            <p>POWERED BY <span class="sann-highlight">SANN404 FORUM</span></p>
+            <p style="font-size: 0.7rem; opacity: 0.6;">ENGINEERED FOR PERFORMANCE</p>
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

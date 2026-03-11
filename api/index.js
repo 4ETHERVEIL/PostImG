@@ -10,60 +10,86 @@ const upload = multer({ storage: multer.memoryStorage() });
 const TELE_TOKEN = process.env.TELE_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
-// ENDPOINT 1: Upload gambar dan kembalikan link custom
-app.post('/api/upload', upload.single('image'), async (req, res) => {
+// ENDPOINT 1: Upload file ke Telegram
+app.post('/api/upload', upload.single('media'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'Pilih file terlebih dahulu' });
 
+        const mime = req.file.mimetype;
+        let endpoint = 'sendDocument';
+        let fieldName = 'document';
+
+        // Deteksi jenis file otomatis
+        if (mime.startsWith('image/') && mime !== 'image/gif') {
+            endpoint = 'sendPhoto';
+            fieldName = 'photo';
+        } else if (mime.startsWith('video/')) {
+            endpoint = 'sendVideo';
+            fieldName = 'video';
+        } else if (mime === 'image/gif') {
+            endpoint = 'sendAnimation';
+            fieldName = 'animation';
+        }
+
         const form = new FormData();
         form.append('chat_id', CHAT_ID);
-        form.append('photo', req.file.buffer, { filename: 'image.jpg' });
+        form.append(fieldName, req.file.buffer, { filename: req.file.originalname || 'file' });
 
-        // 1. Upload ke Telegram
-        const teleRes = await axios.post(`https://api.telegram.org/bot${TELE_TOKEN}/sendPhoto`, form, {
+        // Upload ke Telegram
+        const teleRes = await axios.post(`https://api.telegram.org/bot${TELE_TOKEN}/${endpoint}`, form, {
             headers: form.getHeaders()
         });
 
-        // 2. Dapatkan File ID
-        const fileId = teleRes.data.result.photo.pop().file_id;
+        const result = teleRes.data.result;
+        let fileId;
 
-        // 3. Buat URL menggunakan domain web Anda (misal: cloud-img.vercel.app/v/12345)
+        // Dapatkan File ID
+        if (endpoint === 'sendPhoto') {
+            fileId = result.photo.pop().file_id; 
+        } else if (endpoint === 'sendVideo') {
+            fileId = result.video.file_id;
+        } else if (endpoint === 'sendAnimation') {
+            fileId = result.animation.file_id;
+        } else {
+            fileId = result.document.file_id;
+        }
+
+        // Buat URL dengan domain Vercel Anda
         const protocol = req.headers['x-forwarded-proto'] || 'http';
         const host = req.headers.host;
         const customUrl = `${protocol}://${host}/v/${fileId}`;
 
         res.json({ url: customUrl });
     } catch (error) {
-        console.error(error);
+        console.error(error.response?.data || error.message);
         res.status(500).json({ error: 'Gagal upload ke storage Telegram' });
     }
 });
 
-// ENDPOINT 2: Menampilkan gambar saat link custom dibuka
+// ENDPOINT 2: Menampilkan file di browser
 app.get('/v/:fileId', async (req, res) => {
     try {
         const { fileId } = req.params;
         
-        // 1. Dapatkan File Path dari Telegram menggunakan File ID
+        // Dapatkan Path File
         const getFile = await axios.get(`https://api.telegram.org/bot${TELE_TOKEN}/getFile?file_id=${fileId}`);
         const filePath = getFile.data.result.file_path;
 
-        // 2. Download gambar dari Telegram dan tampilkan (proxy) ke browser user
-        const imageRes = await axios({
+        // Download stream dari Telegram
+        const mediaRes = await axios({
             url: `https://api.telegram.org/file/bot${TELE_TOKEN}/${filePath}`,
             method: 'GET',
             responseType: 'stream'
         });
 
-        // Set header agar browser mengenalinya sebagai gambar JPG
-        res.setHeader('Content-Type', 'image/jpeg');
-        // Fitur Cache agar gambar loading lebih cepat jika dibuka berkali-kali
+        // Set Header format agar browser tahu ini gambar atau video
+        res.setHeader('Content-Type', mediaRes.headers['content-type']);
         res.setHeader('Cache-Control', 'public, max-age=31536000'); 
         
-        imageRes.data.pipe(res);
+        mediaRes.data.pipe(res);
     } catch (error) {
         console.error(error);
-        res.status(404).send('Gambar tidak ditemukan atau sudah dihapus dari Telegram');
+        res.status(404).send('File tidak ditemukan / sudah dihapus');
     }
 });
 

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeleCloud - Hosting Gambar Gratis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #0b0e14; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .grad-text { background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="text-slate-200 font-sans">
+
+    <div class="min-h-screen flex flex-col items-center justify-center px-4">
+        <div class="text-center mb-10">
+            <h1 class="text-5xl font-black mb-4 grad-text">TeleCloud</h1>
+            <p class="text-slate-400">Penyimpanan gambar permanen, cepat, dan tanpa batas.</p>
+        </div>
+
+        <div class="glass w-full max-w-xl p-8 rounded-[2rem] shadow-2xl">
+            <form id="uploadForm" class="space-y-6">
+                <div class="border-2 border-dashed border-slate-700 rounded-2xl p-8 text-center hover:border-indigo-500 transition cursor-pointer" id="dropzone">
+                    <input type="file" id="fileInput" accept="image/*" class="hidden" required>
+                    <label for="fileInput" class="cursor-pointer">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-indigo-500 mb-4"></i>
+                        <p id="fileName" class="text-slate-300">Klik atau seret gambar ke sini</p>
+                    </label>
+                </div>
+
+                <button type="submit" id="btn" class="w-full bg-indigo-600 hover:bg-indigo-700 py-4 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-indigo-500/20">
+                    Upload Sekarang
+                </button>
+            </form>
+
+            <div id="loader" class="hidden py-6 text-center">
+                <div class="inline-block animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mb-2"></div>
+                <p class="text-sm text-slate-400">Mengirim ke awan...</p>
+            </div>
+
+            <div id="result" class="hidden mt-8 p-5 bg-slate-900/80 rounded-2xl border border-indigo-500/20">
+                <label class="text-xs font-bold text-indigo-400 uppercase tracking-widest">Link Gambar Anda:</label>
+                <div class="flex mt-2 gap-2">
+                    <input type="text" id="urlInput" readonly class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm outline-none">
+                    <button onclick="copy()" class="bg-indigo-600 px-4 rounded-lg hover:bg-indigo-700"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const form = document.getElementById('uploadForm');
+        const btn = document.getElementById('btn');
+        const loader = document.getElementById('loader');
+        const result = document.getElementById('result');
+        const urlInput = document.getElementById('urlInput');
+
+        input.onchange = () => { if(input.files[0]) fileName.innerText = input.files[0].name; };
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            btn.classList.add('hidden');
+            loader.classList.remove('hidden');
+            result.classList.add('hidden');
+
+            const fd = new FormData();
+            fd.append('image', input.files[0]);
+
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                const data = await res.json();
+                if(data.url) {
+                    urlInput.value = data.url;
+                    result.classList.remove('hidden');
+                }
+            } catch (err) { alert("Upload gagal!"); }
+            finally {
+                btn.classList.remove('hidden');
+                loader.classList.add('hidden');
+            }
+        };
+
+        function copy() {
+            urlInput.select();
+            document.execCommand('copy');
+            alert("Tersalin!");
+        }
+    </script>
+</body>
+</html>

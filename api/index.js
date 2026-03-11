@@ -10,12 +10,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 const TELE_TOKEN = process.env.TELE_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
-// ENDPOINT 1: Upload file ke Telegram
 app.post('/api/upload', upload.single('media'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'Pilih file terlebih dahulu' });
 
         const mime = req.file.mimetype;
+        const originalName = req.file.originalname || 'Unknown_File';
         let endpoint = 'sendDocument';
         let fieldName = 'document';
 
@@ -31,9 +31,31 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
             fieldName = 'animation';
         }
 
+        // === FITUR BARU: MENDETEKSI DEVICE & LOKASI ===
+        // Mengambil data dari header yang disediakan otomatis oleh Vercel
+        const ipInfo = req.headers['x-forwarded-for'] || 'Unknown IP';
+        const userAgent = req.headers['user-agent'] || 'Unknown Device';
+        const city = req.headers['x-vercel-ip-city'] || 'Unknown City';
+        const country = req.headers['x-vercel-ip-country'] || 'Unknown Country';
+        // ==============================================
+
         const form = new FormData();
         form.append('chat_id', CHAT_ID);
-        form.append(fieldName, req.file.buffer, { filename: req.file.originalname || 'file' });
+        form.append(fieldName, req.file.buffer, { filename: originalName });
+
+        // === CAPTION DENGAN DATA PELACAK (Menggunakan format HTML agar aman) ===
+        const caption = `🚀 <b>TELECLOUD SYSTEM - NODE ACTIVE</b>\n\n` +
+                        `📁 <b>File:</b> ${originalName}\n` +
+                        `⚙️ <b>Format:</b> ${mime}\n\n` +
+                        `🕵️ <b>UPLOADER INTEL</b>\n` +
+                        `🌐 <b>IP:</b> ${ipInfo}\n` +
+                        `📍 <b>Location:</b> ${city}, ${country}\n` +
+                        `📱 <b>Device:</b> <code>${userAgent}</code>\n\n` +
+                        `✅ <i>Payload successfully stored in secure cloud.</i>`;
+                        
+        form.append('caption', caption);
+        form.append('parse_mode', 'HTML'); 
+        // ======================================================================
 
         // Upload ke Telegram
         const teleRes = await axios.post(`https://api.telegram.org/bot${TELE_TOKEN}/${endpoint}`, form, {
@@ -71,18 +93,15 @@ app.get('/v/:fileId', async (req, res) => {
     try {
         const { fileId } = req.params;
         
-        // Dapatkan Path File
         const getFile = await axios.get(`https://api.telegram.org/bot${TELE_TOKEN}/getFile?file_id=${fileId}`);
         const filePath = getFile.data.result.file_path;
 
-        // Download stream dari Telegram
         const mediaRes = await axios({
             url: `https://api.telegram.org/file/bot${TELE_TOKEN}/${filePath}`,
             method: 'GET',
             responseType: 'stream'
         });
 
-        // Set Header format agar browser tahu ini gambar atau video
         res.setHeader('Content-Type', mediaRes.headers['content-type']);
         res.setHeader('Cache-Control', 'public, max-age=31536000'); 
         

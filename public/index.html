@@ -4,23 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <meta name="theme-color" content="#6a0dad">
-    <title>TeleCloud - Cyber Storage</title>
+    <title>TeleCloud - Cyber Media Storage</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- VARIABLES & PALETTE --- */
         :root {
             --bg-color: #e0e0e0;
             --main-black: #0a0a0a;
             --card-bg: #ffffff;
-            
-            /* PALET WARNA CYBER */
-            --accent-primary: #6a0dad;  /* Deep Electric Violet */
-            --accent-secondary: #ccff00; /* Toxic Lime */
-            --accent-tertiary: #ff5f00;  /* Industrial Orange */
-            
+            --accent-primary: #6a0dad;  
+            --accent-secondary: #ccff00; 
+            --accent-tertiary: #ff5f00;  
             --border-width: 3px;
             --font-head: 'Space Grotesk', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
@@ -38,24 +34,16 @@
                 linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
             background-size: 20px 20px;
-            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        /* --- DECORATION & NOISE --- */
-        .bg-noise {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0.04; pointer-events: none; z-index: -1;
-            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1IiBoZWlnaHQ9IjUiPgo8cmVjdCB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZmZmIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiMwMDAiLz4KPC9zdmc+');
-        }
-
+        .bg-noise { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.04; pointer-events: none; z-index: -1; background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1IiBoZWlnaHQ9IjUiPgo8cmVjdCB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZmZmIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiMwMDAiLz4KPC9zdmc+'); }
         .floating-shape { position: fixed; z-index: -2; border: 2px solid var(--main-black); background: var(--accent-secondary); opacity: 0.6; }
         .shape-1 { width: 100px; height: 100px; top: 10%; left: -20px; border-radius: 50%; }
         .shape-2 { width: 150px; height: 150px; bottom: 20%; right: -40px; transform: rotate(45deg); background: var(--accent-primary); }
 
-        /* --- MARQUEE TOP --- */
         .marquee-top {
             background: var(--main-black); color: var(--card-bg); padding: 8px 0;
             font-family: var(--font-mono); font-size: 0.7rem; font-weight: bold;
@@ -67,72 +55,49 @@
         .marquee-content i { margin: 0 8px; color: var(--accent-secondary); }
         @keyframes scrollLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-        /* --- CONTAINER & CARD --- */
         .container { width: 100%; max-width: 500px; padding: 15px; margin-top: 30px; }
 
-        .cyber-card {
-            background: var(--card-bg); border: var(--border-width) solid var(--main-black);
-            box-shadow: 8px 8px 0 var(--main-black); position: relative; overflow: hidden;
-        }
-
-        /* SCREW DECORATION */
+        .cyber-card { background: var(--card-bg); border: var(--border-width) solid var(--main-black); box-shadow: 8px 8px 0 var(--main-black); position: relative; overflow: hidden; }
         .cyber-card::before { content: '⬤'; position: absolute; top: 5px; left: 10px; font-size: 10px; color: rgba(0,0,0,0.3); pointer-events: none; }
         .cyber-card::after { content: '⬤'; position: absolute; bottom: 5px; right: 10px; font-size: 10px; color: rgba(0,0,0,0.3); pointer-events: none; }
 
-        /* HEADER VISUAL */
-        .card-header-visual {
-            background: var(--accent-primary); padding: 15px; border-bottom: var(--border-width) solid var(--main-black);
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .card-header-visual { background: var(--accent-primary); padding: 15px; border-bottom: var(--border-width) solid var(--main-black); display: flex; justify-content: space-between; align-items: center; }
         .profile-section { display: flex; align-items: center; gap: 12px; }
-        .avatar-img {
-            width: 45px; height: 45px; border: 3px solid var(--main-black); background: #fff; border-radius: 12px;
-            box-shadow: 4px 4px 0 var(--accent-secondary); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
-        }
+        .avatar-img { width: 45px; height: 45px; border: 3px solid var(--main-black); background: #fff; border-radius: 12px; box-shadow: 4px 4px 0 var(--accent-secondary); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
         .profile-info { display: flex; flex-direction: column; }
         .user-role { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-secondary); font-weight: bold; letter-spacing: 1px; }
         .user-action { font-weight: 900; color: #fff; font-size: 1rem; text-transform: uppercase; line-height: 1.1; }
         .decor-lines { font-family: var(--font-mono); color: rgba(255,255,255,0.3); font-weight: 900; font-size: 1.2rem; letter-spacing: -2px; }
 
-        /* --- INPUT SECTION --- */
         .card-body { padding: 20px; }
         .input-wrapper { position: relative; margin-bottom: 15px; }
         .input-label { font-family: var(--font-mono); font-weight: bold; font-size: 0.75rem; margin-bottom: 5px; display: block; color: var(--main-black); }
 
-        .cyber-input {
-            width: 100%; padding: 12px; border: 3px solid var(--main-black); background: #f4f4f4;
-            font-family: var(--font-mono); font-size: 0.9rem; font-weight: bold; outline: none; transition: 0.2s; color: var(--main-black);
-        }
+        .cyber-input { width: 100%; padding: 12px; border: 3px solid var(--main-black); background: #f4f4f4; font-family: var(--font-mono); font-size: 0.9rem; font-weight: bold; outline: none; transition: 0.2s; color: var(--main-black); }
         .cyber-input:focus { background: #fff; border-color: var(--accent-tertiary); }
         
-        .file-label {
-            display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; border-style: dashed;
-        }
+        .file-label { display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; border-style: dashed; }
         .file-label:hover { background: #fff; border-color: var(--accent-primary); color: var(--accent-primary); }
 
-        /* --- BUTTON UTAMA --- */
-        .cyber-button {
-            width: 100%; padding: 14px; border: 3px solid var(--main-black); background: var(--accent-secondary);
-            color: var(--main-black); font-family: var(--font-head); font-weight: 900; font-size: 1.1rem;
-            text-transform: uppercase; cursor: pointer; position: relative; overflow: hidden;
-            box-shadow: 5px 5px 0 var(--main-black); transition: all 0.1s; margin-bottom: 8px; display: flex; justify-content: center; gap: 8px; align-items: center;
-        }
+        .system-warning { background: var(--main-black); color: var(--accent-tertiary); padding: 8px 12px; border: 2px solid var(--accent-tertiary); font-family: var(--font-mono); font-size: 0.75rem; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; animation: pulse-border 2s infinite; }
+        .system-warning i { font-size: 1rem; animation: blink 1s infinite; }
+        .file-size-info { font-size: 0.7rem; color: #888; text-align: right; margin-top: -10px; margin-bottom: 15px; display: block; font-family: var(--font-mono); }
+        .file-error { color: var(--accent-tertiary) !important; font-weight: bold; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes pulse-border { 0%, 100% { border-color: var(--accent-tertiary); } 50% { border-color: #550000; } }
+
+        .cyber-button { width: 100%; padding: 14px; border: 3px solid var(--main-black); background: var(--accent-secondary); color: var(--main-black); font-family: var(--font-head); font-weight: 900; font-size: 1.1rem; text-transform: uppercase; cursor: pointer; position: relative; overflow: hidden; box-shadow: 5px 5px 0 var(--main-black); transition: all 0.1s; margin-bottom: 8px; display: flex; justify-content: center; gap: 8px; align-items: center; }
         .cyber-button:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--main-black); }
         .cyber-button:hover { background: #bfff00; }
         .cyber-button:disabled { background: #ccc; cursor: not-allowed; box-shadow: 5px 5px 0 #888; border-color: #888; color: #555; transform: none; }
         .cyber-button.secondary { background: #fff; }
         
-        /* NOTIFICATION */
-        #notification {
-            position: fixed; top: 60px; right: 15px; padding: 10px 18px; border: 3px solid var(--main-black); font-weight: 900;
-            box-shadow: 5px 5px 0 var(--main-black); transform: translateX(200%); transition: transform 0.3s; z-index: 1002; max-width: 90%;
-            font-family: var(--font-head); font-size: 0.85rem; background: var(--card-bg);
-        }
+        #notification { position: fixed; top: 60px; right: 15px; padding: 10px 18px; border: 3px solid var(--main-black); font-weight: 900; box-shadow: 5px 5px 0 var(--main-black); transform: translateX(200%); transition: transform 0.3s; z-index: 1002; max-width: 90%; font-family: var(--font-head); font-size: 0.85rem; background: var(--card-bg); }
         #notification.show { transform: translateX(0); }
         .notif-success { background: var(--accent-secondary) !important; color: var(--main-black); }
         .notif-error { background: var(--accent-tertiary) !important; color: white; }
 
-        /* RESULT BOX */
         #resultBox { display: none; margin-top: 20px; padding-top: 20px; border-top: 3px dashed var(--main-black); }
     </style>
 </head>
@@ -144,23 +109,22 @@
 
     <div class="marquee-top">
         <div class="marquee-content">
-            <span><i class="fas fa-bolt"></i> TELECLOUD STORAGE </span>
-            <span><i class="fas fa-cube"></i> FREE IMAGE HOSTING </span>
+            <span><i class="fas fa-bolt"></i> TELECLOUD MEDIA NODE </span>
+            <span><i class="fas fa-cube"></i> MAX PAYLOAD 4.5MB </span>
             <span><i class="fas fa-network-wired"></i> SECURE CLOUD </span>
-            <span><i class="fas fa-bolt"></i> TELECLOUD STORAGE </span>
-            <span><i class="fas fa-cube"></i> FREE IMAGE HOSTING </span>
+            <span><i class="fas fa-video"></i> SUPPORTS JPG, PNG, GIF, MP4 </span>
+            <span><i class="fas fa-cube"></i> FREE MEDIA HOSTING </span>
         </div>
     </div>
 
     <div class="container">
         <div class="cyber-card">
-            
             <div class="card-header-visual">
                 <div class="profile-section">
                     <div class="avatar-img"><i class="fas fa-cloud-upload-alt text-main-black"></i></div>
                     <div class="profile-info">
                         <span class="user-role">SYSTEM READY</span>
-                        <span class="user-action">UPLOAD PORTAL</span>
+                        <span class="user-action">MEDIA PORTAL</span>
                     </div>
                 </div>
                 <div class="decor-lines">///</div>
@@ -169,11 +133,18 @@
             <div class="card-body">
                 <form id="uploadForm">
                     <div class="input-wrapper">
-                        <label class="input-label">📁 TARGET FILE</label>
-                        <input type="file" id="fileInput" accept="image/*" class="hidden" style="display: none;" required>
+                        <label class="input-label">📁 TARGET FILE (IMG/VID/GIF)</label>
+                        <input type="file" id="fileInput" accept="image/*,video/*,.gif" class="hidden" style="display: none;" required>
                         <label for="fileInput" id="fileLabel" class="cyber-input file-label">
-                            <i class="fas fa-folder-open" style="margin-right: 8px;"></i> SELECT IMAGE FILE
+                            <i class="fas fa-folder-open" style="margin-right: 8px;"></i> SELECT MEDIA FILE
                         </label>
+                    </div>
+                    
+                    <span id="sizeInfo" class="file-size-info">Selected Size: 0 MB / Max: 4.5 MB</span>
+
+                    <div class="system-warning" id="sysWarning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>WARNING: SYSTEM RESTRICTS FILE SIZES ABOVE 4.5MB TO PREVENT SERVER OVERLOAD.</span>
                     </div>
 
                     <button type="submit" id="btn" class="cyber-button">
@@ -200,7 +171,6 @@
                         UPLOAD NEW FILE
                     </button>
                 </div>
-
             </div>
         </div>
     </div>
@@ -215,8 +185,12 @@
         const resultBox = document.getElementById('resultBox');
         const urlInput = document.getElementById('urlInput');
         const previewLink = document.getElementById('previewLink');
+        const sizeInfo = document.getElementById('sizeInfo');
+        const sysWarning = document.getElementById('sysWarning');
+        
+        const MAX_SIZE_MB = 4.5;
+        const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
-        // Notification function ala Cyber theme
         function showNotification(text, type = 'success') {
             const n = document.getElementById('notification');
             n.innerHTML = type === 'success' ? `<i class="fas fa-check-circle"></i> ${text}` : `<i class="fas fa-exclamation-triangle"></i> ${text}`;
@@ -224,24 +198,44 @@
             setTimeout(() => n.classList.remove('show'), 3000);
         }
 
-        // Ubah teks saat gambar dipilih
         input.onchange = () => { 
-            if(input.files[0]) {
-                fileLabel.innerHTML = `<i class="fas fa-file-image" style="margin-right: 8px;"></i> ${input.files[0].name}`;
+            const file = input.files[0];
+            if(file) {
+                const icon = file.type.startsWith('video') ? 'fa-film' : 'fa-file-image';
+                fileLabel.innerHTML = `<i class="fas ${icon}" style="margin-right: 8px;"></i> ${file.name}`;
                 fileLabel.style.borderColor = "var(--accent-primary)";
+
+                const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                sizeInfo.innerHTML = `Selected Size: <strong>${sizeInMB} MB</strong> / Max: ${MAX_SIZE_MB} MB`;
+
+                if (file.size > MAX_SIZE_BYTES) {
+                    sizeInfo.classList.add('file-error');
+                    sysWarning.innerHTML = `<i class="fas fa-times-circle"></i> <span>ERROR: FILE EXCEEDS ${MAX_SIZE_MB}MB. DEPLOYMENT ABORTED.</span>`;
+                    btn.disabled = true;
+                    btn.innerHTML = `<i class="fas fa-lock"></i> SYSTEM LOCKED`;
+                } else {
+                    sizeInfo.classList.remove('file-error');
+                    sysWarning.innerHTML = `<i class="fas fa-info-circle"></i> <span>READY: FILE SIZE IS OPTIMAL. SAFE TO PROCEED.</span>`;
+                    sysWarning.style.borderColor = "var(--accent-secondary)";
+                    sysWarning.style.color = "var(--accent-secondary)";
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fas fa-satellite-dish"></i> EXECUTE UPLOAD`;
+                }
             } 
         };
 
         form.onsubmit = async (e) => {
             e.preventDefault();
-            
-            // State Loading
+            if (input.files[0].size > MAX_SIZE_BYTES) {
+                showNotification('ERROR: FILE TOO LARGE', 'error'); return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> TRANSMITTING...`;
             resultBox.style.display = 'none';
 
             const fd = new FormData();
-            fd.append('image', input.files[0]);
+            fd.append('media', input.files[0]);
 
             try {
                 const res = await fetch('/api/upload', { method: 'POST', body: fd });
@@ -250,33 +244,38 @@
                 if(data.url) {
                     urlInput.value = data.url;
                     previewLink.href = data.url;
-                    
-                    // Show Result
                     resultBox.style.display = 'block';
                     showNotification('UPLOAD COMPLETE!', 'success');
                 } else {
                     showNotification('ERROR: FAILED TO GET LINK', 'error');
                 }
             } catch (err) { 
-                showNotification('ERROR: CONNECTION LOST', 'error');
+                showNotification('ERROR: CONNECTION LOST OR PAYLOAD REJECTED', 'error');
             } finally {
-                // Restore Button
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fas fa-satellite-dish"></i> EXECUTE UPLOAD`;
+                if(resultBox.style.display !== 'block') {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fas fa-satellite-dish"></i> EXECUTE UPLOAD`;
+                }
             }
         };
 
         function copyText() {
-            urlInput.select();
-            document.execCommand('copy');
+            urlInput.select(); document.execCommand('copy');
             showNotification('LINK COPIED TO CLIPBOARD', 'success');
         }
 
         function resetForm() {
             form.reset();
-            fileLabel.innerHTML = `<i class="fas fa-folder-open" style="margin-right: 8px;"></i> SELECT IMAGE FILE`;
+            fileLabel.innerHTML = `<i class="fas fa-folder-open" style="margin-right: 8px;"></i> SELECT MEDIA FILE`;
             fileLabel.style.borderColor = "var(--main-black)";
+            sysWarning.style.borderColor = "var(--accent-tertiary)";
+            sysWarning.style.color = "var(--accent-tertiary)";
+            sysWarning.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>WARNING: SYSTEM RESTRICTS FILE SIZES ABOVE 4.5MB TO PREVENT SERVER OVERLOAD.</span>`;
+            sizeInfo.innerHTML = `Selected Size: 0 MB / Max: 4.5 MB`;
+            sizeInfo.classList.remove('file-error');
             resultBox.style.display = 'none';
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fas fa-satellite-dish"></i> EXECUTE UPLOAD`;
         }
     </script>
 </body>

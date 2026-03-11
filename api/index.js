@@ -69,7 +69,7 @@ app.get('/api/user/:clientId', async (req, res) => {
                     }
                 });
             } else {
-                throw err; // Lempar error jika masalahnya bukan 404 (misal: Rules terkunci)
+                throw err; // Lempar error jika masalahnya bukan 404
             }
         }
 

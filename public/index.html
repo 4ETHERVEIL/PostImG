@@ -1,136 +1,244 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeleCloud - Image Hosting</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="theme-color" content="#6a0dad">
+    <title>TeleCloud - Cyber Storage</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #000000; /* Hitam pekat khas Vercel */
-            color: #ffffff;
-            background-image: radial-gradient(circle at 50% 0%, #1a1a24 0%, transparent 50%);
+        /* --- VARIABLES & PALETTE --- */
+        :root {
+            --bg-color: #e0e0e0;
+            --main-black: #0a0a0a;
+            --card-bg: #ffffff;
+            
+            /* PALET WARNA CYBER */
+            --accent-primary: #6a0dad;  /* Deep Electric Violet */
+            --accent-secondary: #ccff00; /* Toxic Lime */
+            --accent-tertiary: #ff5f00;  /* Industrial Orange */
+            
+            --border-width: 3px;
+            --font-head: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
-        /* Efek garis halus di sekitar card */
-        .vercel-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-head);
+            background-color: var(--bg-color);
+            color: var(--main-black);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .text-gradient {
-            background: linear-gradient(180deg, #fff, #adadad);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+
+        /* --- DECORATION & NOISE --- */
+        .bg-noise {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0.04; pointer-events: none; z-index: -1;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1IiBoZWlnaHQ9IjUiPgo8cmVjdCB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSIjZmZmIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiMwMDAiLz4KPC9zdmc+');
         }
+
+        .floating-shape { position: fixed; z-index: -2; border: 2px solid var(--main-black); background: var(--accent-secondary); opacity: 0.6; }
+        .shape-1 { width: 100px; height: 100px; top: 10%; left: -20px; border-radius: 50%; }
+        .shape-2 { width: 150px; height: 150px; bottom: 20%; right: -40px; transform: rotate(45deg); background: var(--accent-primary); }
+
+        /* --- MARQUEE TOP --- */
+        .marquee-top {
+            background: var(--main-black); color: var(--card-bg); padding: 8px 0;
+            font-family: var(--font-mono); font-size: 0.7rem; font-weight: bold;
+            border-bottom: var(--border-width) solid var(--accent-secondary);
+            overflow: hidden; white-space: nowrap; position: fixed; top: 0; width: 100%; z-index: 999;
+        }
+        .marquee-content { display: inline-block; animation: scrollLeft 20s linear infinite; }
+        .marquee-content span { margin-right: 25px; }
+        .marquee-content i { margin: 0 8px; color: var(--accent-secondary); }
+        @keyframes scrollLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        /* --- CONTAINER & CARD --- */
+        .container { width: 100%; max-width: 500px; padding: 15px; margin-top: 30px; }
+
+        .cyber-card {
+            background: var(--card-bg); border: var(--border-width) solid var(--main-black);
+            box-shadow: 8px 8px 0 var(--main-black); position: relative; overflow: hidden;
+        }
+
+        /* SCREW DECORATION */
+        .cyber-card::before { content: '⬤'; position: absolute; top: 5px; left: 10px; font-size: 10px; color: rgba(0,0,0,0.3); pointer-events: none; }
+        .cyber-card::after { content: '⬤'; position: absolute; bottom: 5px; right: 10px; font-size: 10px; color: rgba(0,0,0,0.3); pointer-events: none; }
+
+        /* HEADER VISUAL */
+        .card-header-visual {
+            background: var(--accent-primary); padding: 15px; border-bottom: var(--border-width) solid var(--main-black);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .profile-section { display: flex; align-items: center; gap: 12px; }
+        .avatar-img {
+            width: 45px; height: 45px; border: 3px solid var(--main-black); background: #fff; border-radius: 12px;
+            box-shadow: 4px 4px 0 var(--accent-secondary); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+        }
+        .profile-info { display: flex; flex-direction: column; }
+        .user-role { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-secondary); font-weight: bold; letter-spacing: 1px; }
+        .user-action { font-weight: 900; color: #fff; font-size: 1rem; text-transform: uppercase; line-height: 1.1; }
+        .decor-lines { font-family: var(--font-mono); color: rgba(255,255,255,0.3); font-weight: 900; font-size: 1.2rem; letter-spacing: -2px; }
+
+        /* --- INPUT SECTION --- */
+        .card-body { padding: 20px; }
+        .input-wrapper { position: relative; margin-bottom: 15px; }
+        .input-label { font-family: var(--font-mono); font-weight: bold; font-size: 0.75rem; margin-bottom: 5px; display: block; color: var(--main-black); }
+
+        .cyber-input {
+            width: 100%; padding: 12px; border: 3px solid var(--main-black); background: #f4f4f4;
+            font-family: var(--font-mono); font-size: 0.9rem; font-weight: bold; outline: none; transition: 0.2s; color: var(--main-black);
+        }
+        .cyber-input:focus { background: #fff; border-color: var(--accent-tertiary); }
+        
+        .file-label {
+            display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; border-style: dashed;
+        }
+        .file-label:hover { background: #fff; border-color: var(--accent-primary); color: var(--accent-primary); }
+
+        /* --- BUTTON UTAMA --- */
+        .cyber-button {
+            width: 100%; padding: 14px; border: 3px solid var(--main-black); background: var(--accent-secondary);
+            color: var(--main-black); font-family: var(--font-head); font-weight: 900; font-size: 1.1rem;
+            text-transform: uppercase; cursor: pointer; position: relative; overflow: hidden;
+            box-shadow: 5px 5px 0 var(--main-black); transition: all 0.1s; margin-bottom: 8px; display: flex; justify-content: center; gap: 8px; align-items: center;
+        }
+        .cyber-button:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--main-black); }
+        .cyber-button:hover { background: #bfff00; }
+        .cyber-button:disabled { background: #ccc; cursor: not-allowed; box-shadow: 5px 5px 0 #888; border-color: #888; color: #555; transform: none; }
+        .cyber-button.secondary { background: #fff; }
+        
+        /* NOTIFICATION */
+        #notification {
+            position: fixed; top: 60px; right: 15px; padding: 10px 18px; border: 3px solid var(--main-black); font-weight: 900;
+            box-shadow: 5px 5px 0 var(--main-black); transform: translateX(200%); transition: transform 0.3s; z-index: 1002; max-width: 90%;
+            font-family: var(--font-head); font-size: 0.85rem; background: var(--card-bg);
+        }
+        #notification.show { transform: translateX(0); }
+        .notif-success { background: var(--accent-secondary) !important; color: var(--main-black); }
+        .notif-error { background: var(--accent-tertiary) !important; color: white; }
+
+        /* RESULT BOX */
+        #resultBox { display: none; margin-top: 20px; padding-top: 20px; border-top: 3px dashed var(--main-black); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-blue-500 selection:text-white">
+<body>
 
-    <nav class="w-full flex items-center justify-between p-6 max-w-4xl mx-auto">
-        <div class="flex items-center gap-2 font-bold text-lg tracking-tight">
-            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
-            TeleCloud.
+    <div class="bg-noise"></div>
+    <div class="floating-shape shape-1"></div>
+    <div class="floating-shape shape-2"></div>
+
+    <div class="marquee-top">
+        <div class="marquee-content">
+            <span><i class="fas fa-bolt"></i> TELECLOUD STORAGE </span>
+            <span><i class="fas fa-cube"></i> FREE IMAGE HOSTING </span>
+            <span><i class="fas fa-network-wired"></i> SECURE CLOUD </span>
+            <span><i class="fas fa-bolt"></i> TELECLOUD STORAGE </span>
+            <span><i class="fas fa-cube"></i> FREE IMAGE HOSTING </span>
         </div>
-        <a href="#" class="text-sm font-medium text-gray-400 hover:text-white transition">Github</a>
-    </nav>
+    </div>
 
-    <main class="flex-grow flex flex-col items-center justify-center px-4 w-full max-w-3xl mx-auto -mt-16">
-        
-        <div class="text-center mb-10 w-full">
-            <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-4 text-gradient">
-                Simpan Gambar Anda.
-            </h1>
-            <p class="text-gray-400 text-lg md:text-xl font-medium max-w-xl mx-auto">
-                Penyimpanan cloud gratis tanpa batas berbasis Telegram. Cepat, aman, dan tanpa iklan.
-            </p>
-        </div>
-
-        <div class="w-full vercel-card rounded-2xl p-2 shadow-2xl transition-all duration-300">
-            <form id="uploadForm" class="relative flex items-center w-full bg-[#111111] border border-white/10 rounded-xl overflow-hidden focus-within:border-white/30 focus-within:ring-1 focus-within:ring-white/30 transition-all">
-                
-                <input type="file" id="fileInput" accept="image/*" class="hidden" required>
-                
-                <label for="fileInput" class="flex-grow flex items-center h-14 px-4 cursor-pointer text-gray-400 hover:text-gray-200 transition">
-                    <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                    </svg>
-                    <span id="fileName" class="truncate font-medium">Pilih gambar dari perangkat...</span>
-                </label>
-
-                <button type="submit" id="btn" class="h-10 px-6 mr-2 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition active:scale-95 flex items-center justify-center shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Upload
-                </button>
-
-                <div id="loader" class="hidden h-10 px-6 mr-2 bg-white text-black font-semibold rounded-lg flex items-center justify-center shrink-0">
-                    <svg class="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+    <div class="container">
+        <div class="cyber-card">
+            
+            <div class="card-header-visual">
+                <div class="profile-section">
+                    <div class="avatar-img"><i class="fas fa-cloud-upload-alt text-main-black"></i></div>
+                    <div class="profile-info">
+                        <span class="user-role">SYSTEM READY</span>
+                        <span class="user-action">UPLOAD PORTAL</span>
+                    </div>
                 </div>
-            </form>
-        </div>
+                <div class="decor-lines">///</div>
+            </div>
 
-        <div id="result" class="w-full mt-6 hidden opacity-0 transition-opacity duration-500">
-            <div class="vercel-card rounded-2xl p-6 flex flex-col items-center">
-                <svg class="w-12 h-12 text-green-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h3 class="text-xl font-bold mb-4">Gambar Berhasil Diunggah!</h3>
-                
-                <div class="w-full relative flex items-center bg-[#111111] border border-white/10 rounded-xl p-1">
-                    <input type="text" id="urlInput" readonly class="w-full bg-transparent border-none text-sm text-gray-300 px-4 focus:ring-0 outline-none">
-                    <button onclick="copyText()" class="px-4 py-2 bg-[#222222] hover:bg-[#333333] text-white rounded-lg text-sm font-medium transition flex items-center gap-2 border border-white/5">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                        Copy
+            <div class="card-body">
+                <form id="uploadForm">
+                    <div class="input-wrapper">
+                        <label class="input-label">📁 TARGET FILE</label>
+                        <input type="file" id="fileInput" accept="image/*" class="hidden" style="display: none;" required>
+                        <label for="fileInput" id="fileLabel" class="cyber-input file-label">
+                            <i class="fas fa-folder-open" style="margin-right: 8px;"></i> SELECT IMAGE FILE
+                        </label>
+                    </div>
+
+                    <button type="submit" id="btn" class="cyber-button">
+                        <i class="fas fa-satellite-dish"></i> EXECUTE UPLOAD
+                    </button>
+                </form>
+
+                <div id="resultBox">
+                    <div class="input-wrapper">
+                        <label class="input-label" style="color: var(--accent-primary);">✅ SUCCESS. LINK GENERATED:</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="urlInput" class="cyber-input" readonly>
+                            <button onclick="copyText()" class="cyber-button secondary" style="width: 50px; margin: 0; padding: 0;">
+                                <i class="far fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <a id="previewLink" href="#" target="_blank" style="text-decoration: none;">
+                        <button class="cyber-button secondary" style="font-size: 0.9rem; padding: 10px;">
+                            OPEN NEW TAB <i class="fas fa-external-link-alt" style="margin-left: 5px;"></i>
+                        </button>
+                    </a>
+                    <button onclick="resetForm()" class="cyber-button" style="background: var(--main-black); color: white; font-size: 0.9rem; padding: 10px;">
+                        UPLOAD NEW FILE
                     </button>
                 </div>
 
-                <div class="mt-4 flex gap-4 text-sm font-medium">
-                    <a id="previewLink" href="#" target="_blank" class="text-gray-400 hover:text-white transition flex items-center gap-1">
-                        Buka di tab baru
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                    </a>
-                    <button onclick="resetForm()" class="text-gray-400 hover:text-white transition">Upload file lain</button>
-                </div>
             </div>
         </div>
+    </div>
 
-    </main>
-
-    <footer class="py-6 text-center text-sm font-medium text-gray-600">
-        Ditenagai oleh Vercel & Telegram Bot API
-    </footer>
+    <div id="notification"></div>
 
     <script>
         const input = document.getElementById('fileInput');
-        const fileName = document.getElementById('fileName');
+        const fileLabel = document.getElementById('fileLabel');
         const form = document.getElementById('uploadForm');
         const btn = document.getElementById('btn');
-        const loader = document.getElementById('loader');
-        const result = document.getElementById('result');
+        const resultBox = document.getElementById('resultBox');
         const urlInput = document.getElementById('urlInput');
         const previewLink = document.getElementById('previewLink');
 
-        // Mengubah teks saat gambar dipilih
+        // Notification function ala Cyber theme
+        function showNotification(text, type = 'success') {
+            const n = document.getElementById('notification');
+            n.innerHTML = type === 'success' ? `<i class="fas fa-check-circle"></i> ${text}` : `<i class="fas fa-exclamation-triangle"></i> ${text}`;
+            n.className = `notif-${type} show`;
+            setTimeout(() => n.classList.remove('show'), 3000);
+        }
+
+        // Ubah teks saat gambar dipilih
         input.onchange = () => { 
             if(input.files[0]) {
-                fileName.innerText = input.files[0].name;
-                fileName.classList.add('text-white');
+                fileLabel.innerHTML = `<i class="fas fa-file-image" style="margin-right: 8px;"></i> ${input.files[0].name}`;
+                fileLabel.style.borderColor = "var(--accent-primary)";
             } 
         };
 
         form.onsubmit = async (e) => {
             e.preventDefault();
             
-            // UI Loading State
-            btn.classList.add('hidden');
-            loader.classList.remove('hidden');
-            result.classList.add('hidden');
-            result.classList.remove('opacity-100');
+            // State Loading
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> TRANSMITTING...`;
+            resultBox.style.display = 'none';
 
             const fd = new FormData();
             fd.append('image', input.files[0]);
@@ -143,33 +251,32 @@
                     urlInput.value = data.url;
                     previewLink.href = data.url;
                     
-                    // Show Result with smooth fade-in
-                    result.classList.remove('hidden');
-                    setTimeout(() => result.classList.add('opacity-100'), 50);
+                    // Show Result
+                    resultBox.style.display = 'block';
+                    showNotification('UPLOAD COMPLETE!', 'success');
                 } else {
-                    alert("Gagal mendapatkan link!");
+                    showNotification('ERROR: FAILED TO GET LINK', 'error');
                 }
             } catch (err) { 
-                alert("Upload gagal! Periksa koneksi internet Anda."); 
+                showNotification('ERROR: CONNECTION LOST', 'error');
             } finally {
-                // Restore UI State
-                btn.classList.remove('hidden');
-                loader.classList.add('hidden');
+                // Restore Button
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fas fa-satellite-dish"></i> EXECUTE UPLOAD`;
             }
         };
 
         function copyText() {
             urlInput.select();
             document.execCommand('copy');
-            alert("Link berhasil disalin!");
+            showNotification('LINK COPIED TO CLIPBOARD', 'success');
         }
 
         function resetForm() {
             form.reset();
-            fileName.innerText = "Pilih gambar dari perangkat...";
-            fileName.classList.remove('text-white');
-            result.classList.remove('opacity-100');
-            setTimeout(() => result.classList.add('hidden'), 300);
+            fileLabel.innerHTML = `<i class="fas fa-folder-open" style="margin-right: 8px;"></i> SELECT IMAGE FILE`;
+            fileLabel.style.borderColor = "var(--main-black)";
+            resultBox.style.display = 'none';
         }
     </script>
 </body>

@@ -3,10 +3,6 @@ const multer = require('multer');
 const axios = require('axios');
 const FormData = require('form-data');
 
-// Import Firebase versi Server (Node.js)
-const { initializeApp } = require('firebase/app');
-const { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, serverTimestamp } = require('firebase/firestore');
-
 const app = express();
 app.use(express.json()); // Agar backend bisa membaca data JSON
 
@@ -15,19 +11,19 @@ const upload = multer({ storage: multer.memoryStorage() });
 const TELE_TOKEN = process.env.TELE_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDoy_bQVNbQfb_4v9CK50sip2H3oJsqyjQ",
-  authDomain: "onion-cloud-a8d3d.firebaseapp.com",
-  projectId: "onion-cloud-a8d3d",
-  storageBucket: "onion-cloud-a8d3d.firebasestorage.app",
-  messagingSenderId: "847112548109",
-  appId: "1:847112548109:web:e17bb0b171f648aac04a44",
-  measurementId: "G-N3XT0CV97T"
-};
+// PENTING: Gunakan Project ID Firebase Anda
+const PROJECT_ID = "onion-cloud-a8d3d"; 
+const DB_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+// ==========================================
+// FUNGSI WAKTU AKURAT (WIB - ASIA/JAKARTA)
+// ==========================================
+const getWIBDate = () => {
+    // Membuat tanggal berdasarkan waktu UTC lalu ditambah 7 jam untuk WIB
+    const d = new Date();
+    d.setUTCHours(d.getUTCHours() + 7);
+    return d.toISOString().split('T')[0]; // Menghasilkan format YYYY-MM-DD
+};
 
 // ==========================================
 // ENDPOINT 1: Sinkronisasi Koin (Dipanggil saat web dibuka)
@@ -35,33 +31,51 @@ const db = getFirestore(firebaseApp);
 app.get('/api/user/:clientId', async (req, res) => {
     try {
         const { clientId } = req.params;
-        const today = new Date().toISOString().split('T')[0];
-        const userRef = doc(db, 'telecloud_users', clientId);
-        const userSnap = await getDoc(userRef);
+        const todayWIB = getWIBDate(); // Menggunakan tanggal WIB yang akurat
+        const userUrl = `${DB_URL}/telecloud_users/${clientId}`;
 
         let coins = 0;
         let isNewDay = false;
 
-        if (!userSnap.exists()) {
-            // User baru, kasih 3 koin
-            coins = 3;
-            await setDoc(userRef, { coins: 3, last_login: today, createdAt: serverTimestamp() });
-            isNewDay = true;
-        } else {
-            const data = userSnap.data();
-            if (data.last_login !== today) {
-                // Sudah ganti hari, reset koin jadi 3
+        try {
+            // Coba ambil data user dari Firebase
+            const fRes = await axios.get(userUrl);
+            const fields = fRes.data.fields;
+            const lastLogin = fields.last_login?.stringValue || "";
+            coins = parseInt(fields.coins?.integerValue || fields.coins?.doubleValue || 0);
+
+            // Jika tanggal terakhir login BERBEDA dengan tanggal WIB hari ini
+            if (lastLogin !== todayWIB) {
                 coins = 3;
-                await updateDoc(userRef, { coins: 3, last_login: today });
                 isNewDay = true;
+                // Update koin jadi 3 dan set tanggal login ke hari ini
+                await axios.patch(`${userUrl}?updateMask.fieldPaths=coins&updateMask.fieldPaths=last_login`, {
+                    fields: {
+                        coins: { integerValue: 3 },
+                        last_login: { stringValue: todayWIB }
+                    }
+                });
+            }
+        } catch (err) {
+            // Jika user belum ada (Error 404 dari Firebase)
+            if (err.response && err.response.status === 404) {
+                coins = 3;
+                isNewDay = true;
+                // Buat user baru dengan 3 koin
+                await axios.patch(`${userUrl}?updateMask.fieldPaths=coins&updateMask.fieldPaths=last_login`, {
+                    fields: {
+                        coins: { integerValue: 3 },
+                        last_login: { stringValue: todayWIB }
+                    }
+                });
             } else {
-                // Hari yang sama, gunakan saldo terakhir
-                coins = data.coins;
+                throw err; // Lempar error jika masalahnya bukan 404 (misal: Rules terkunci)
             }
         }
+
         res.json({ coins, isNewDay });
     } catch (error) {
-        console.error("Firebase Auth Error:", error);
+        console.error("Firebase API Error:", error.response?.data || error.message);
         res.status(500).json({ error: 'Gagal mengambil data koin dari server' });
     }
 });
@@ -75,14 +89,18 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
         if (!clientId) return res.status(400).json({ error: 'Akses Ditolak: KTP tidak valid' });
         if (!req.file) return res.status(400).json({ error: 'Pilih file terlebih dahulu' });
 
+        const userUrl = `${DB_URL}/telecloud_users/${clientId}`;
+        let currentCoins = 0;
+
         // 1. CEK KOIN DI DATABASE (Anti-Hack)
-        const userRef = doc(db, 'telecloud_users', clientId);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists() || userSnap.data().coins <= 0) {
+        try {
+            const fRes = await axios.get(userUrl);
+            currentCoins = parseInt(fRes.data.fields.coins?.integerValue || 0);
+        } catch (err) {
             return res.status(403).json({ error: 'OUT_OF_COINS' });
         }
 
-        let currentCoins = userSnap.data().coins;
+        if (currentCoins <= 0) return res.status(403).json({ error: 'OUT_OF_COINS' });
 
         // 2. PROSES UPLOAD KE TELEGRAM
         const mime = req.file.mimetype;
@@ -116,24 +134,28 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
         const host = req.headers.host;
         const customUrl = `${protocol}://${host}/v/${fileId}`;
 
-        // 3. SIMPAN RIWAYAT KE FIREBASE & POTONG KOIN
-        const currentSizeMB = (req.file.size / (1024 * 1024)).toFixed(2);
-        
-        await addDoc(collection(db, 'telecloud_uploads'), {
-            userId: clientId,
-            fileName: originalName,
-            fileSize: currentSizeMB + " MB",
-            url: customUrl,
-            timestamp: serverTimestamp()
+        // 3. POTONG KOIN
+        await axios.patch(`${userUrl}?updateMask.fieldPaths=coins`, {
+            fields: { coins: { integerValue: currentCoins - 1 } }
         });
 
-        await updateDoc(userRef, { coins: currentCoins - 1 });
+        // 4. SIMPAN RIWAYAT KE FIREBASE
+        const currentSizeMB = (req.file.size / (1024 * 1024)).toFixed(2);
+        await axios.post(`${DB_URL}/telecloud_uploads`, {
+            fields: {
+                userId: { stringValue: clientId },
+                fileName: { stringValue: originalName },
+                fileSize: { stringValue: currentSizeMB + " MB" },
+                url: { stringValue: customUrl },
+                timestamp: { timestampValue: new Date().toISOString() }
+            }
+        });
 
         // Kembalikan Link URL dan Sisa Koin terbaru ke Frontend
         res.json({ url: customUrl, remainingCoins: currentCoins - 1 });
 
     } catch (error) {
-        console.error(error.response?.data || error.message);
+        console.error("Upload Error:", error.response?.data || error.message);
         res.status(500).json({ error: 'Gagal memproses unggahan' });
     }
 });
@@ -157,7 +179,7 @@ app.get('/v/:fileId', async (req, res) => {
         res.setHeader('Cache-Control', 'public, max-age=31536000'); 
         mediaRes.data.pipe(res);
     } catch (error) {
-        console.error(error);
+        console.error("Proxy Error:", error);
         res.status(404).send('File tidak ditemukan / sudah dihapus');
     }
 });

@@ -15,14 +15,15 @@ const upload = multer({ storage: multer.memoryStorage() });
 const TELE_TOKEN = process.env.TELE_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
-// --- CONFIG FIREBASE (Aman karena disembunyikan di Backend Server) ---
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyB0q9aSR1-MZkbJ0woYiqQI6il6oeoEWUo",
-    authDomain: "inventory-2ab17.firebaseapp.com",
-    projectId: "inventory-2ab17",
-    storageBucket: "inventory-2ab17.firebasestorage.app",
-    messagingSenderId: "1085281663088",
-    appId: "1:1085281663088:web:a65f8c29b07a224ccf9cb5"
+  apiKey: "AIzaSyDoy_bQVNbQfb_4v9CK50sip2H3oJsqyjQ",
+  authDomain: "onion-cloud-a8d3d.firebaseapp.com",
+  projectId: "onion-cloud-a8d3d",
+  storageBucket: "onion-cloud-a8d3d.firebasestorage.app",
+  messagingSenderId: "847112548109",
+  appId: "1:847112548109:web:e17bb0b171f648aac04a44",
+  measurementId: "G-N3XT0CV97T"
 };
 
 const firebaseApp = initializeApp(firebaseConfig);

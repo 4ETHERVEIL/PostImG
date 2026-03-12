@@ -184,4 +184,39 @@ app.get('/v/:fileId', async (req, res) => {
     }
 });
 
+// ==========================================
+// ENDPOINT 4: ADMIN PANEL (AMBIL SEMUA DATA)
+// ==========================================
+app.get('/api/admin/data', async (req, res) => {
+    try {
+        // Ambil Data Users
+        const usersRes = await axios.get(`${DB_URL}/telecloud_users`);
+        const userDocs = usersRes.data.documents || [];
+        const users = userDocs.map(doc => ({
+            id: doc.name.split('/').pop(),
+            coins: parseInt(doc.fields.coins?.integerValue || doc.fields.coins?.doubleValue || 0),
+            last_login: doc.fields.last_login?.stringValue || "Unknown"
+        }));
+
+        // Ambil Data Uploads
+        const uploadsRes = await axios.get(`${DB_URL}/telecloud_uploads`);
+        const uploadDocs = uploadsRes.data.documents || [];
+        const uploads = uploadDocs.map(doc => ({
+            userId: doc.fields.userId?.stringValue || "Unknown",
+            fileName: doc.fields.fileName?.stringValue || "Unknown",
+            fileSize: doc.fields.fileSize?.stringValue || "0 MB",
+            url: doc.fields.url?.stringValue || "#",
+            timestamp: doc.fields.timestamp?.timestampValue || ""
+        }));
+
+        // Urutkan upload dari yang terbaru
+        uploads.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        res.json({ users, uploads });
+    } catch (error) {
+        console.error("Admin Error:", error.response?.data || error.message);
+        res.status(500).json({ error: 'Gagal memuat data admin' });
+    }
+});
+
 module.exports = app;

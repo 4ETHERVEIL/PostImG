@@ -104,7 +104,7 @@
                 <div class="user-top-row">
                     <div>
                         <span class="label">MEMBERSHIP</span>
-                        <div class="level"><i class="fas fa-user-astronaut text-accent-secondary"></i> FREE USER</div>
+                        <div class="level" id="userTierBox"><i class="fas fa-user-astronaut text-accent-secondary" style="color: var(--accent-secondary);"></i> <span style="color: var(--accent-secondary);">FREE USER</span></div>
                     </div>
                     <div style="text-align: right;">
                         <span class="label" style="color: var(--accent-tertiary);">VERIFIED ID</span>
@@ -180,6 +180,7 @@
         const warningText = document.getElementById('warningText');
         const coinAmountText = document.getElementById('coinAmount');
         const userIdBox = document.getElementById('userIdBox');
+        const userTierBox = document.getElementById('userTierBox');
         
         const MAX_SIZE_MB = 4.5;
         const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
@@ -187,13 +188,11 @@
         // --- 2. SISTEM ID (KTP PENGGUNA) ---
         let clientId = localStorage.getItem('tele_client_id');
         
-        // Auto-Update: Jika user lama masih pakai awalan SYS-, ganti jadi ONION-
         if (clientId && clientId.startsWith('SYS-')) {
             clientId = clientId.replace('SYS-', 'ONION-');
             localStorage.setItem('tele_client_id', clientId);
         }
 
-        // Jika user benar-benar baru, buatkan ID ONION- baru
         if (!clientId) {
             clientId = 'ONION-' + Math.floor(10000 + Math.random() * 90000);
             localStorage.setItem('tele_client_id', clientId);
@@ -209,36 +208,29 @@
             
             countdownInterval = setInterval(() => {
                 const now = new Date();
-                
-                // Ambil waktu saat ini persis di zona waktu Jakarta (WIB)
                 const nowWIB = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
                 
-                // Set target ke Jam 00:00:00 hari berikutnya (besok) di waktu WIB
                 const tomorrowWIB = new Date(nowWIB);
                 tomorrowWIB.setHours(24, 0, 0, 0); 
                 
-                // Hitung selisih waktu
                 const diff = tomorrowWIB - nowWIB;
 
-                // Jika waktu habis, hentikan timer dan minta koin baru ke server
                 if (diff <= 0) {
                     clearInterval(countdownInterval);
                     fetchCoinsFromServer(); 
                     return;
                 }
 
-                // Ubah milidetik menjadi Jam, Menit, Detik
                 const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
                 const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
                 const s = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
 
-                // Tampilkan ke layar
                 btn.innerHTML = `<i class="fas fa-hourglass-half fa-spin"></i> RECHARGE IN ${h}:${m}:${s}`;
                 warningText.innerHTML = `ACCESS DENIED: Insufficient Credits. Server reset in <b>${h}:${m}:${s}</b>`;
             }, 1000);
         }
 
-        // --- 4. AMBIL KOIN DARI SERVER ---
+        // --- 4. AMBIL KOIN & TIER DARI SERVER ---
         async function fetchCoinsFromServer() {
             try {
                 btn.disabled = true;
@@ -252,8 +244,13 @@
                 myCoins = data.coins;
                 coinAmountText.innerText = myCoins;
 
+                // --- UPDATE UI TIER PENGGUNA ---
+                const tierColors = { "Free": "var(--accent-secondary)", "VIP": "#00bcd4", "VVIP": "#ff9800", "VVIP+": "#ff003c" };
+                const tColor = tierColors[data.tier] || tierColors["Free"];
+                userTierBox.innerHTML = `<i class="fas fa-user-astronaut" style="color: ${tColor};"></i> <span style="color: ${tColor};">${data.tier.toUpperCase()} USER</span>`;
+
                 if (data.isNewDay) {
-                    setTimeout(() => showNotification('DAILY LOGIN REWARD: +3 COINS!', 'success'), 1000);
+                    setTimeout(() => showNotification(`DAILY REWARD: +${data.resetAmount} COINS!`, 'success'), 1000);
                 }
                 checkCoinStatus();
 
@@ -264,7 +261,6 @@
             }
         }
         
-        // Panggil saat web pertama kali dibuka
         fetchCoinsFromServer(); 
 
         function checkCoinStatus() {
@@ -272,7 +268,7 @@
                 btn.disabled = true; 
                 sysWarning.style.borderColor = "var(--accent-tertiary)"; 
                 sysWarning.style.color = "var(--accent-tertiary)";
-                startCountdown(); // Jalankan timer otomatis saat koin 0
+                startCountdown(); 
             } else {
                 if (countdownInterval) clearInterval(countdownInterval);
                 btn.disabled = false;

@@ -18,7 +18,9 @@ const getWIBDate = () => {
     return d.toISOString().split('T')[0]; 
 };
 
-// 1. SINKRONISASI KOIN
+// ==========================================
+// 1. SINKRONISASI KOIN & MEMBERSHIP
+// ==========================================
 app.get('/api/user/:clientId', async (req, res) => {
     try {
         const { clientId } = req.params;
@@ -52,7 +54,9 @@ app.get('/api/user/:clientId', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal sinkronisasi data' }); }
 });
 
+// ==========================================
 // 2. UPLOAD & POTONG KOIN
+// ==========================================
 app.post('/api/upload', upload.single('media'), async (req, res) => {
     try {
         const clientId = req.body.clientId;
@@ -89,29 +93,27 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Upload gagal' }); }
 });
 
-// 3. REDEEM CODE (BARU)
+// ==========================================
+// 3. REDEEM CODE PENGGUNA
+// ==========================================
 app.post('/api/redeem', async (req, res) => {
     try {
         const { clientId, code } = req.body;
         const upperCode = code.toUpperCase();
         
-        // Cek Kode di Database
         const codeRes = await axios.get(`${DB_URL}/telecloud_codes/${upperCode}`);
         const reward = parseInt(codeRes.data.fields.value.integerValue);
 
-        // Ambil Data User
         const userUrl = `${DB_URL}/telecloud_users/${clientId}`;
         const userRes = await axios.get(userUrl);
         let currentCoins = parseInt(userRes.data.fields.coins?.integerValue || 0);
         let redeemedHistory = userRes.data.fields.redeemed?.stringValue || "";
 
-        // Cek apakah user sudah pernah pakai kode ini
         let usedList = redeemedHistory.split(',');
         if (usedList.includes(upperCode)) {
             return res.status(400).json({ error: 'KODE SUDAH PERNAH DIGUNAKAN!' });
         }
 
-        // Tambahkan Koin & Catat Sejarah
         usedList.push(upperCode);
         await axios.patch(`${userUrl}?updateMask.fieldPaths=coins&updateMask.fieldPaths=redeemed`, {
             fields: { coins: { integerValue: currentCoins + reward }, redeemed: { stringValue: usedList.join(',') } }
@@ -123,30 +125,41 @@ app.post('/api/redeem', async (req, res) => {
     }
 });
 
-// 4. PROXY MEDIA
+// ==========================================
+// 4. PROXY MEDIA (FIX VERCEL ARRAYBUFFER)
+// ==========================================
 app.get('/v/:fileId', async (req, res) => {
     try {
         const { fileId } = req.params;
         const getFile = await axios.get(`https://api.telegram.org/bot${TELE_TOKEN}/getFile?file_id=${fileId}`);
-        const mediaRes = await axios({ url: `https://api.telegram.org/file/bot${TELE_TOKEN}/${getFile.data.result.file_path}`, method: 'GET', responseType: 'stream' });
+        const filePath = getFile.data.result.file_path;
+
+        // Gunakan arraybuffer agar Vercel Serverless tidak error saat mengirim file
+        const mediaRes = await axios({ 
+            url: `https://api.telegram.org/file/bot${TELE_TOKEN}/${filePath}`, 
+            method: 'GET', 
+            responseType: 'arraybuffer' 
+        });
+        
         res.setHeader('Content-Type', mediaRes.headers['content-type']);
         res.setHeader('Cache-Control', 'public, max-age=31536000'); 
-        mediaRes.data.pipe(res);
-    } catch (error) { res.status(404).send('File tidak ditemukan'); }
+        res.send(mediaRes.data); 
+
+    } catch (error) { 
+        console.error("Proxy Error:", error.message);
+        res.status(404).send('Tautan kedaluwarsa atau file tidak ditemukan'); 
+    }
 });
 
 // ==========================================
-// AREA ADMIN PANEL
+// 5. AREA ADMIN PANEL
 // ==========================================
-
-// Cek Kredensial
 const checkAdmin = (req) => {
     const validUser = process.env.ADMIN_USER || "admin";
     const validPass = process.env.ADMIN_PASS || "onion2026";
     return (req.body.username === validUser && req.body.password === validPass);
 };
 
-// Ambil Semua Data Admin
 app.post('/api/admin/data', async (req, res) => {
     if (!checkAdmin(req)) return res.status(401).json({ error: 'Akses Ditolak!' });
     try {
@@ -171,7 +184,6 @@ app.post('/api/admin/data', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal memuat data' }); }
 });
 
-// Admin Aksi: Edit User, Hapus User, Buat Kode, Hapus Kode
 app.post('/api/admin/action', async (req, res) => {
     if (!checkAdmin(req)) return res.status(401).json({ error: 'Akses Ditolak!' });
     const { action, targetId, newCoins, newTier, codeValue } = req.body;

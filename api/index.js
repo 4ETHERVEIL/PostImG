@@ -10,14 +10,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const TELE_TOKEN = process.env.TELE_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
-
-// PENTING: Project ID Firebase Anda
 const PROJECT_ID = "onion-cloud-a8d3d"; 
 const DB_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 
-// ==========================================
-// FUNGSI WAKTU AKURAT (WIB - ASIA/JAKARTA)
-// ==========================================
+// BATAS KOIN HARIAN SESUAI MEMBERSHIP
+const TIER_LIMITS = { "Free": 3, "VIP": 10, "VVIP": 20, "VVIP+": 30 };
+
 const getWIBDate = () => {
     const d = new Date();
     d.setUTCHours(d.getUTCHours() + 7);
@@ -25,7 +23,7 @@ const getWIBDate = () => {
 };
 
 // ==========================================
-// ENDPOINT 1: Sinkronisasi Koin (Reset 00:00 WIB)
+// ENDPOINT 1: Sinkronisasi Koin & Membership
 // ==========================================
 app.get('/api/user/:clientId', async (req, res) => {
     try {
@@ -35,33 +33,36 @@ app.get('/api/user/:clientId', async (req, res) => {
 
         let coins = 0;
         let isNewDay = false;
+        let tier = "Free";
+        let resetAmount = 3;
 
         try {
             const fRes = await axios.get(userUrl);
             const fields = fRes.data.fields;
             const lastLogin = fields.last_login?.stringValue || "";
+            
             coins = parseInt(fields.coins?.integerValue || fields.coins?.doubleValue || 0);
+            tier = fields.tier?.stringValue || "Free";
+            resetAmount = TIER_LIMITS[tier] || 3;
 
             if (lastLogin !== todayWIB) {
-                coins = 3;
+                coins = resetAmount;
                 isNewDay = true;
-                await axios.patch(`${userUrl}?updateMask.fieldPaths=coins&updateMask.fieldPaths=last_login`, {
-                    fields: { coins: { integerValue: 3 }, last_login: { stringValue: todayWIB } }
+                await axios.patch(`${userUrl}?updateMask.fieldPaths=coins&updateMask.fieldPaths=last_login&updateMask.fieldPaths=tier`, {
+                    fields: { coins: { integerValue: coins }, last_login: { stringValue: todayWIB }, tier: { stringValue: tier } }
                 });
             }
         } catch (err) {
             if (err.response && err.response.status === 404) {
-                coins = 3;
-                isNewDay = true;
-                await axios.patch(`${userUrl}?updateMask.fieldPaths=coins&updateMask.fieldPaths=last_login`, {
-                    fields: { coins: { integerValue: 3 }, last_login: { stringValue: todayWIB } }
+                coins = 3; tier = "Free"; resetAmount = 3; isNewDay = true;
+                await axios.patch(`${userUrl}?updateMask.fieldPaths=coins&updateMask.fieldPaths=last_login&updateMask.fieldPaths=tier`, {
+                    fields: { coins: { integerValue: 3 }, last_login: { stringValue: todayWIB }, tier: { stringValue: "Free" } }
                 });
             } else { throw err; }
         }
 
-        res.json({ coins, isNewDay });
+        res.json({ coins, isNewDay, tier, resetAmount });
     } catch (error) {
-        console.error("API Error:", error.response?.data || error.message);
         res.status(500).json({ error: 'Gagal sinkronisasi data' });
     }
 });
@@ -140,29 +141,24 @@ app.get('/v/:fileId', async (req, res) => {
 });
 
 // ==========================================
-// ENDPOINT 4: ADMIN PANEL (SECURE POST LOGIN)
+// ENDPOINT 4: ADMIN PANEL - AMBIL DATA
 // ==========================================
 app.post('/api/admin/data', async (req, res) => {
     try {
         const { username, password } = req.body;
-
-        // Kunci Rahasia dari Vercel (Default sementara: admin / onion2026)
         const validUser = process.env.ADMIN_USER || "admin";
         const validPass = process.env.ADMIN_PASS || "onion2026";
 
-        if (username !== validUser || password !== validPass) {
-            return res.status(401).json({ error: 'Kredensial Tidak Valid!' });
-        }
+        if (username !== validUser || password !== validPass) return res.status(401).json({ error: 'Kredensial Tidak Valid!' });
 
-        // Ambil Data Users
         const usersRes = await axios.get(`${DB_URL}/telecloud_users`);
         const users = (usersRes.data.documents || []).map(doc => ({
             id: doc.name.split('/').pop(),
             coins: parseInt(doc.fields.coins?.integerValue || doc.fields.coins?.doubleValue || 0),
+            tier: doc.fields.tier?.stringValue || "Free",
             last_login: doc.fields.last_login?.stringValue || "Unknown"
         }));
 
-        // Ambil Data Uploads
         const uploadsRes = await axios.get(`${DB_URL}/telecloud_uploads`);
         const uploads = (uploadsRes.data.documents || []).map(doc => ({
             userId: doc.fields.userId?.stringValue || "Unknown",
@@ -173,11 +169,32 @@ app.post('/api/admin/data', async (req, res) => {
         }));
 
         uploads.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
         res.json({ users, uploads });
+    } catch (error) { res.status(500).json({ error: 'Gagal memuat data dari Firebase' }); }
+});
+
+// ==========================================
+// ENDPOINT 5: ADMIN PANEL - UPDATE USER (BARU)
+// ==========================================
+app.post('/api/admin/update-user', async (req, res) => {
+    try {
+        const { username, password, targetUserId, newCoins, newTier } = req.body;
+        const validUser = process.env.ADMIN_USER || "admin";
+        const validPass = process.env.ADMIN_PASS || "onion2026";
+
+        if (username !== validUser || password !== validPass) return res.status(401).json({ error: 'Akses Ditolak!' });
+
+        const userUrl = `${DB_URL}/telecloud_users/${targetUserId}`;
+        await axios.patch(`${userUrl}?updateMask.fieldPaths=coins&updateMask.fieldPaths=tier`, {
+            fields: { 
+                coins: { integerValue: parseInt(newCoins) },
+                tier: { stringValue: newTier }
+            }
+        });
+
+        res.json({ success: true });
     } catch (error) {
-        console.error("Admin API Error:", error.response?.data || error.message);
-        res.status(500).json({ error: 'Gagal memuat data dari Firebase' });
+        res.status(500).json({ error: 'Gagal memperbarui user' });
     }
 });
 

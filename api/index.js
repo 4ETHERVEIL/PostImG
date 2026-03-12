@@ -55,7 +55,7 @@ app.get('/api/user/:clientId', async (req, res) => {
 });
 
 // ==========================================
-// 2. UPLOAD & POTONG KOIN
+// 2. UPLOAD & POTONG KOIN (DENGAN EKSTENSI FILE)
 // ==========================================
 app.post('/api/upload', upload.single('media'), async (req, res) => {
     try {
@@ -73,17 +73,22 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
 
         const mime = req.file.mimetype;
         const originalName = req.file.originalname || 'Unknown_File';
-        let endpoint = 'sendDocument', fieldName = 'document';
-        if (mime.startsWith('image/') && mime !== 'image/gif') { endpoint = 'sendPhoto'; fieldName = 'photo'; } 
-        else if (mime.startsWith('video/')) { endpoint = 'sendVideo'; fieldName = 'video'; } 
-        else if (mime === 'image/gif') { endpoint = 'sendAnimation'; fieldName = 'animation'; }
+        let endpoint = 'sendDocument', fieldName = 'document', fileExt = '.bin';
+        
+        // Menentukan ekstensi berdasarkan jenis file
+        if (mime.startsWith('image/') && mime !== 'image/gif') { endpoint = 'sendPhoto'; fieldName = 'photo'; fileExt = '.jpg'; } 
+        else if (mime.startsWith('video/')) { endpoint = 'sendVideo'; fieldName = 'video'; fileExt = '.mp4'; } 
+        else if (mime === 'image/gif') { endpoint = 'sendAnimation'; fieldName = 'animation'; fileExt = '.gif'; }
 
         const form = new FormData();
         form.append('chat_id', CHAT_ID); form.append(fieldName, req.file.buffer, { filename: originalName });
         const teleRes = await axios.post(`https://api.telegram.org/bot${TELE_TOKEN}/${endpoint}`, form, { headers: form.getHeaders() });
         const result = teleRes.data.result;
+        
         let fileId = endpoint === 'sendPhoto' ? result.photo.pop().file_id : endpoint === 'sendVideo' ? result.video.file_id : endpoint === 'sendAnimation' ? result.animation.file_id : result.document.file_id;
-        const customUrl = `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/v/${fileId}`;
+        
+        // URL KELUARAN SEKARANG MEMILIKI EKSTENSI (.jpg / .mp4 / .gif)
+        const customUrl = `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/v/${fileId}${fileExt}`;
 
         await axios.patch(`${userUrl}?updateMask.fieldPaths=coins`, { fields: { coins: { integerValue: currentCoins - 1 } } });
         await axios.post(`${DB_URL}/telecloud_uploads`, {
@@ -126,15 +131,19 @@ app.post('/api/redeem', async (req, res) => {
 });
 
 // ==========================================
-// 4. PROXY MEDIA (FIX VERCEL ARRAYBUFFER)
+// 4. PROXY MEDIA (BISA MEMBACA URL BER-EKSTENSI)
 // ==========================================
-app.get('/v/:fileId', async (req, res) => {
+app.get('/v/:fileParam', async (req, res) => {
     try {
-        const { fileId } = req.params;
+        // fileParam berisi fileId beserta ekstensinya, cth: AgACAg...gYAAt0.jpg
+        const { fileParam } = req.params;
+        
+        // Kita pisahkan titiknya untuk mengambil fileId Telegram aslinya
+        const fileId = fileParam.split('.')[0]; 
+
         const getFile = await axios.get(`https://api.telegram.org/bot${TELE_TOKEN}/getFile?file_id=${fileId}`);
         const filePath = getFile.data.result.file_path;
 
-        // Gunakan arraybuffer agar Vercel Serverless tidak error saat mengirim file
         const mediaRes = await axios({ 
             url: `https://api.telegram.org/file/bot${TELE_TOKEN}/${filePath}`, 
             method: 'GET', 
